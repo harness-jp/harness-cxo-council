@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local working
+/local/
+/private/
+/inbox/
+/case_log/
+/episodes/
+*.draft.md
+
+# Logs
+/log/
+*.log
+
+# Claude session
+.claude/sessions/
+
+# Temp
+/tmp/
+*.tmp
+*.bak

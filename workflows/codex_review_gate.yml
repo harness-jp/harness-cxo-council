@@ -1,0 +1,145 @@
+name: "[Gate] Codex Review Gate (不可逆操作の二段階審査)"
+
+# 不可逆操作（外部送信・データ削除・本番更新）を実行する前に、
+# CxO 事前レビュー → 外部 reviewer 検証 → ユーザー承認 の3層を通すゲート。
+#
+# 設計思想:
+# - 「今回だけ」「急ぎだから」では Gate を通さない
+# - Gate を通過しないと不可逆操作は実行されない
+# - Gate そのものを緩める判断は、Gate の再設計として別管理
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation_type:
+        description: '不可逆操作の種類 (mail_send / contract_send / data_delete / system_update)'
+        required: true
+        type: choice
+        options:
+          - mail_send
+          - contract_send
+          - data_delete
+          - system_update
+      operation_target:
+        description: '操作対象（ファイルパス / メール件名 / システム名）'
+        required: true
+      operation_payload:
+        description: '操作内容のサマリ（200字以内）'
+        required: true
+      bypass_external_reviewer:
+        description: 'Phase 2 (外部 reviewer) をスキップ (緊急時のみ・後追い記録)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  phase_1_cxo_review:
+    name: "Phase 1: CxO 事前レビュー"
+    runs-on: ubuntu-latest
+    outputs:
+      cao_verdict: ${{ steps.cao.outputs.verdict }}
+      cfo_verdict: ${{ steps.cfo.outputs.verdict }}
+      coo_verdict: ${{ steps.coo.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CAO レビュー（業務効率視点）
+        id: cao
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPERATION_TYPE: ${{ inputs.operation_type }}
+          OPERATION_TARGET: ${{ inputs.operation_target }}
+          OPERATION_PAYLOAD: ${{ inputs.operation_payload }}
+        run: |
+          echo "CAO レビュー対象: $OPERATION_TYPE / $OPERATION_TARGET"
+          # ここで roles/cao.md を読み込んで Claude API 経由でレビュー
+          # 出力: verdict=GO/NOGO/CONDITIONAL + 理由
+          # 実装は scripts/gate_review.mjs に分離（このリポでは雛形のみ）
+          echo "verdict=PENDING" >> $GITHUB_OUTPUT
+
+      - name: CFO レビュー（契約・コンプライアンス視点）
+        id: cfo
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "CFO レビュー対象: ${{ inputs.operation_type }}"
+          # roles/cfo.md ベースのレビュー
+          echo "verdict=PENDING" >> $GITHUB_OUTPUT
+
+      - name: COO レビュー（運用基盤視点）
+        id: coo
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          echo "COO レビュー対象: ${{ inputs.operation_type }}"
+          # roles/coo.md ベースのレビュー
+          echo "verdict=PENDING" >> $GITHUB_OUTPUT
+
+      - name: Phase 1 集約判定
+        run: |
+          echo "::notice::Phase 1 結果: CAO=${{ steps.cao.outputs.verdict }} / CFO=${{ steps.cfo.outputs.verdict }} / COO=${{ steps.coo.outputs.verdict }}"
+          # 全 GO でない限り Phase 2 に進まない（実装時にチェック追加）
+
+  phase_2_external_reviewer:
+    name: "Phase 2: 外部 reviewer (blind spot 検出)"
+    needs: phase_1_cxo_review
+    if: ${{ inputs.bypass_external_reviewer != 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.gpt.outputs.verdict }}
+      blind_spots: ${{ steps.gpt.outputs.blind_spots }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 外部 reviewer 起動（GPT-5 Pro 等）
+        id: gpt
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          echo "Phase 1 通過後の二次審査"
+          # GPT-5 Pro / Claude Opus 4.7 等、Phase 1 とは別系統の推論エンジンに渡す
+          # 目的は「Phase 1 が見逃した盲点」の検出
+          # 出力: verdict + blind_spots[]
+          echo "verdict=PENDING" >> $GITHUB_OUTPUT
+          echo "blind_spots=[]" >> $GITHUB_OUTPUT
+
+  phase_3_user_approval:
+    name: "Phase 3: ユーザー最終承認"
+    needs: [phase_1_cxo_review, phase_2_external_reviewer]
+    if: ${{ always() && needs.phase_1_cxo_review.result == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: production-gate  # GitHub Environments でレビュアー必須化
+    steps:
+      - name: 承認待ち
+        run: |
+          echo "::notice::全 Phase 通過 — ユーザー Y/N 承認待ち"
+          echo "Phase 1: ${{ needs.phase_1_cxo_review.result }}"
+          echo "Phase 2: ${{ needs.phase_2_external_reviewer.result }}"
+          echo ""
+          echo "承認後にこのジョブが完了し、不可逆操作が実行可能になる"
+
+  execute:
+    name: "実行（承認後のみ）"
+    needs: phase_3_user_approval
+    runs-on: ubuntu-latest
+    steps:
+      - name: 不可逆操作の実行
+        run: |
+          echo "Operation: ${{ inputs.operation_type }}"
+          echo "Target: ${{ inputs.operation_target }}"
+          echo "Payload: ${{ inputs.operation_payload }}"
+          # 実際の操作実行はここに実装
+          # 例: mail_send なら API 呼び出し
+
+      - name: 実行ログを memory/decisions_ledger.md に追記
+        run: |
+          echo "実行記録を D-XXX として台帳に追記"
+          # 追記スクリプトはリポジトリ側で実装
+
+# 設計メモ:
+# - bypass_external_reviewer は緊急時のみ。事後に必ず台帳に記録し、Phase 2 を後追い実施
+# - GitHub Environments の "production-gate" にレビュアー（=ユーザー）を設定すると Phase 3 で承認が必須化される
+# - 各 Phase の判定スクリプト（scripts/gate_review.mjs）はこのリポでは雛形のみ。実装は利用者側で各CxOロールカードと API 連携
