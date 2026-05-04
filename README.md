@@ -115,6 +115,16 @@ harness-cxo-council/
 │   └── citation_enforcement.md      引用強要ルール
 ├── workflows/
 │   └── codex_review_gate.yml        不可逆操作の二段階ゲート
+├── skills/                          v2追加: 具体スキル集
+│   └── mail-triage/                 メールトリアージ（CAO 主担当）
+│       ├── README.md
+│       ├── prompts/
+│       │   ├── triage_classify.md   8 PB 分類プロンプト
+│       │   └── skip_rules.md        越境/沈黙/上から目線 3層判定
+│       ├── templates/
+│       │   └── reply_drafts.md      PB別返信ドラフト骨格
+│       └── examples/
+│           └── before_after.md      数字付き Before/After + 失敗事例
 ├── scripts/                         実装本体（雛形・利用者側で拡充）
 └── docs/
     ├── installation.md
@@ -190,3 +200,4 @@ MIT License — 詳細は [LICENSE](LICENSE) 参照。
 | 日付 | 内容 |
 |---|---|
 | 2026-05-03 | 初版公開（v1: Council kernel のみ） |
+| 2026-05-04 | v2: `skills/mail-triage/` 追加（CAO 主担当・skip_rules 3層 / 8 PB 分類 / 採点ループ / 失敗事例） |
