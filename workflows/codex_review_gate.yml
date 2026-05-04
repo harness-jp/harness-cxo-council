@@ -93,13 +93,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 外部 reviewer 起動（GPT-5 Pro 等）
+      - name: 外部 reviewer 起動（GPT-5.5 Pro 等）
         id: gpt
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           echo "Phase 1 通過後の二次審査"
-          # GPT-5 Pro / Claude Opus 4.7 等、Phase 1 とは別系統の推論エンジンに渡す
+          # GPT-5.5 Pro / Claude Opus 4.7 等、Phase 1 とは別系統の推論エンジンに渡す
           # 目的は「Phase 1 が見逃した盲点」の検出
           # 出力: verdict + blind_spots[]
           echo "verdict=PENDING" >> $GITHUB_OUTPUT

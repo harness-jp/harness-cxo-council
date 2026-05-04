@@ -104,7 +104,7 @@ cp workflows/codex_review_gate.yml .github/workflows/
 リポ Settings → Secrets and variables → Actions で以下を追加:
 
 - `ANTHROPIC_API_KEY` — Claude API キー
-- `OPENAI_API_KEY` — (任意) GPT-5 Pro 等を Phase 2 で使う場合
+- `OPENAI_API_KEY` — (任意) GPT-5.5 Pro 等を Phase 2 で使う場合
 
 ### 5-3. GitHub Environments を設定
 

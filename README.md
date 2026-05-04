@@ -1,7 +1,6 @@
 # harness-cxo-council
 
-> Claude Code で 5人 Codex 役員会を組むための設計とコード集。
-> note 記事「**[Claude Code で 5人 Codex 役員会を組んだ話](https://note.com/harness8888)**」の実装版。
+> **「AI が勝手に学ぶ」を試したら学ばなかったので、手で組み直したら、勝手に学習してくれた話のテンプレート集。**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -9,15 +8,28 @@
 
 ## これは何
 
-**1人で AI と組んでいる人が、自分の中に「役員会」を持つ**ためのテンプレート集。
+業界発表「AI が自動で学ぶ」「ハーネス組めば学習が定着する」を信じて試した結果、**勝手には学んでくれませんでした**。
+
+そこで、**手で学習ループを組み直したら、不思議なことに、勝手に学習してくれるようになりました**。設計はこうです：
+
+- **引用を強要する**（議論で毎回3つ以上の具体的な引用を要求） → [`prompts/citation_enforcement.md`](prompts/citation_enforcement.md)
+- **3層メモリで議論の蓄積を残す**（永続/状態/会話） → [`memory/`](memory/)
+- **撤回履歴を保持する**(過去の決定を消さず、`🔴 retired` で残す)
+- **8人いた AI 役員会を 5人に削る**（CoS / CAO / CFO / CTO / COO 固定） → [`roles/`](roles/)
+- **GPT-5.5 Pro を「評価役」から「プレイヤー」に格下げ**して中に入れる
+- **不可逆操作は二段階審査**（誤送信を物理的に止める） → [`workflows/codex_review_gate.yml`](workflows/codex_review_gate.yml)
+
+この **3層メモリ + 引用強要 + 撤回履歴** の組み合わせが、結果として **勝手に学習する仕組み** になっています。
+
+note 記事「**[「AI が勝手に学ぶ」を試したら学ばなかったので、手で組み直したら、勝手に学習してくれた話](https://note.com/harness8888)**」の実装版です。
 
 ### 中心思想3つ
 
 | 思想 | 中身 |
 |---|---|
-| **学習を諦めて、引用を強要する** | AI に「学習させる」のは諦め、毎回**最低3つの具体的引用**を要求する設計（→ [prompts/citation_enforcement.md](prompts/citation_enforcement.md)） |
+| **「自動学習」を諦めて、手で学習ループを組み直す** | AI に「自動で学ばせる」のは諦め、引用強要 + 3層メモリ + 撤回履歴で**手動で学習ループを設計**する（→ [prompts/citation_enforcement.md](prompts/citation_enforcement.md)） |
 | **人間の記憶モデルを真似る** | ワーキングメモリ / 長期記憶 / エピソード記憶 の3階層に分けてメモリ管理（→ [memory/](memory/)） |
-| **5人固定 + 外部推論をプレイヤーに格下げ** | CoS/CAO/CFO/CTO/COO の5人を固定。GPT-5 Pro 等を評価役じゃなくプレイヤーとして中に入れる |
+| **5人固定 + 外部推論をプレイヤーに格下げ** | CoS/CAO/CFO/CTO/COO の5人を固定。GPT-5.5 Pro 等を評価役じゃなくプレイヤーとして中に入れる |
 
 ### 既存の AI エージェント集との違い
 
