@@ -60,13 +60,25 @@
 skills/mail-triage/
 ├── README.md                          このファイル
 ├── prompts/
-│   ├── triage_classify.md             8 PB 分類プロンプト（汎化版）
-│   └── skip_rules.md                  越境/沈黙/上から目線 3層判定
+│   ├── triage_classify.md             8 PB 分類プロンプト（汎化版・PRECEDENCE 含む）
+│   └── skip_rules.md                  越境/沈黙/上から目線 3層判定（PRECEDENCE 含む）
 ├── templates/
 │   └── reply_drafts.md                PB別返信ドラフト骨格
 └── examples/
-    └── before_after.md                数字付き Before/After + 失敗事例
+    ├── before_after.md                数字付き Before/After + 失敗事例
+    └── corpus/                        匿名メールサンプル集（8 PB × 2件 = 16件）
+        ├── README.md
+        ├── P-01_new_inquiry_01.md / _02.md
+        ├── P-03_handover_01.md / _02.md
+        ├── P-04_site_visit_01.md / _02.md
+        ├── P-05_scheduling_01.md / _02.md
+        ├── P-08_important_doc_01.md / _02.md     (⚠️ no_autosend)
+        ├── P-09_signature_01.md / _02.md         (⚠️ no_autosend)
+        ├── P-13_termination_01.md / _02.md
+        └── P-14_condition_change_01.md / _02.md  (⚠️ no_autosend)
 ```
+
+各サンプルは「受信メール / 期待される処理（PB・信頼度・skip判定・PRECEDENCE）/ 期待される返信ドラフト / カスタマイズメモ」の4ブロック構成。**動作確認・採点ベースライン・カスタマイズの起点**として使う。
 
 ---
 
