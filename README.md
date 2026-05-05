@@ -200,4 +200,4 @@ MIT License — 詳細は [LICENSE](LICENSE) 参照。
 | 日付 | 内容 |
 |---|---|
 | 2026-05-03 | 初版公開（v1: Council kernel のみ） |
-| 2026-05-04 | v2: `skills/mail-triage/` 追加（CAO 主担当・skip_rules 3層 / 8 PB 分類 / 採点ループ / 失敗事例） |
+| 2026-05-04 | v2: `skills/mail-triage/` 追加 — 大手企業向けメールトリアージスキル（案件単位文脈読み / 7 軸人物把握 / HTML 1 枚 / 手動学習ループ / 朝ローカルダンプ） |
